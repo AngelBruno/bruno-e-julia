@@ -188,6 +188,9 @@ function updateMesasList() {
                 <button class="btn btn-sm btn-primary" onclick="quickAddKeys(${mesa.id})">
                     ➕ Chaves
                 </button>
+                <button class="btn btn-sm btn-primary" onclick="quickRemoveKeys(${mesa.id})">
+                    ➖ Chaves
+                </button>
             </div>
         `;
         container.appendChild(div);
@@ -259,6 +262,12 @@ window.quickAddKeys = (mesaId) => {
     document.getElementById('add-mesa-select').value = mesaId;
     document.getElementById('add-quantidade').value = '';
     openModal('add-keys-modal');
+};
+
+window.quickRemoveKeys = (mesaId) => {
+    document.getElementById('remove-mesa-select').value = mesaId;
+    document.getElementById('remove-quantidade').value = '';
+    openModal('remove-keys-modal');
 };
 
 window.openModal = (modalId) => {
