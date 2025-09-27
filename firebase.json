@@ -1,6 +1,15 @@
 {
+  "emulators": {
+    "dataconnect": {
+      "dataDir": "dataconnect/.dataconnect/pgliteData"
+    }
+  },
+  "dataconnect": {
+    "source": "dataconnect"
+  },
   "hosting": {
-    "public": "public",
+    "site": "bruno-e-julia-53fc9",
+    "public": "dist",
     "ignore": [
       "firebase.json",
       "**/.*",
