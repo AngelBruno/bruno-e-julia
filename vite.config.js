@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import { resolve } from 'path'
 
 export default defineConfig({
   root: 'public',
@@ -7,9 +8,9 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: 'index.html',
-        ranking: 'ranking.html',
-        admin: 'admin.html'
+        main: resolve(__dirname, 'public/index.html'),
+        ranking: resolve(__dirname, 'public/ranking.html'),
+        admin: resolve(__dirname, 'public/admin.html')
       }
     }
   },
