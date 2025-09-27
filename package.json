@@ -1,0 +1,20 @@
+{
+  "name": "bruno-e-julia",
+  "version": "1.0.0",
+  "description": "App para o casamento de Bruno e Julia",
+  "main": "git .js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AngelBruno/bruno-e-julia.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AngelBruno/bruno-e-julia/issues"
+  },
+  "homepage": "https://github.com/AngelBruno/bruno-e-julia#readme"
+}
