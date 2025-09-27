@@ -21,8 +21,7 @@
     "start": "npm run serve"
   },
   "dependencies": {
-    "@dataconnect/generated": "file:src/dataconnect-generated",
-    "firebase": "^12.3.0"
+    "firebase": "^10.13.0"
   },
   "devDependencies": {
     "vite": "^5.0.0"

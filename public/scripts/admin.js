@@ -1,8 +1,18 @@
 // Admin system for Bruno e Julia wedding project
-import { app } from '../firebase-config.js';
-
-// Data Connect client will be imported when generated
-// import { dataConnect } from '../src/dataconnect-generated/index.esm.js';
+import { app, db } from '../firebase-config.js';
+import { 
+    collection, 
+    addDoc, 
+    updateDoc, 
+    doc, 
+    getDocs, 
+    getDoc,
+    setDoc,
+    increment,
+    query,
+    orderBy,
+    serverTimestamp 
+} from 'firebase/firestore';
 
 class AdminSystem {
     constructor() {
@@ -44,15 +54,11 @@ class AdminSystem {
 
     async loadData() {
         try {
-            // For now, use mock data until Data Connect is fully set up
-            this.mesas = await this.getMockMesas();
-            this.configuracao = await this.getMockConfig();
-            this.historico = await this.getMockHistory();
-
-            // TODO: Replace with actual Firebase Data Connect queries
-            // const mesasResult = await listMesasRanking();
-            // const configResult = await getConfiguracaoJogo();
-            // const historyResult = await listTodosRegistros();
+            await Promise.all([
+                this.loadMesasFromFirestore(),
+                this.loadConfigFromFirestore(),
+                this.loadHistoryFromFirestore()
+            ]);
             
             this.renderMesas();
             this.renderStats();
@@ -60,8 +66,59 @@ class AdminSystem {
             
         } catch (error) {
             console.error('Erro ao carregar dados:', error);
-            this.showError('Erro ao carregar dados. Tente recarregar a página.');
+            
+            // Fallback to mock data
+            this.mesas = await this.getMockMesas();
+            this.configuracao = await this.getMockConfig();
+            this.historico = await this.getMockHistory();
+            
+            this.renderMesas();
+            this.renderStats();
+            this.renderHistory();
+            
+            this.showError('Conectado ao modo offline. Algumas funcionalidades podem estar limitadas.');
         }
+    }
+
+    async loadMesasFromFirestore() {
+        const mesasRef = collection(db, 'mesas');
+        const querySnapshot = await getDocs(mesasRef);
+        
+        this.mesas = [];
+        querySnapshot.forEach((doc) => {
+            this.mesas.push({ 
+                id: parseInt(doc.id), 
+                ...doc.data() 
+            });
+        });
+    }
+
+    async loadConfigFromFirestore() {
+        const configRef = doc(db, 'configuracao', 'jogo');
+        const configDoc = await getDoc(configRef);
+        
+        if (configDoc.exists()) {
+            this.configuracao = configDoc.data();
+        } else {
+            // Create default config
+            this.configuracao = { totalChaves: 1000, statusJogo: 'ativo' };
+            await setDoc(configRef, this.configuracao);
+        }
+    }
+
+    async loadHistoryFromFirestore() {
+        const historyRef = collection(db, 'historico');
+        const q = query(historyRef, orderBy('dataHora', 'desc'));
+        const querySnapshot = await getDocs(q);
+        
+        this.historico = [];
+        querySnapshot.forEach((doc) => {
+            this.historico.push({ 
+                id: doc.id, 
+                ...doc.data(),
+                dataHora: doc.data().dataHora?.toDate() || new Date()
+            });
+        });
     }
 
     // Mock data methods - replace with actual Firebase calls
@@ -207,11 +264,22 @@ class AdminSystem {
         }
         
         try {
-            // TODO: Replace with actual Firebase Data Connect mutation
-            // await criarMesa({ id, nome });
+            const novaMesa = {
+                nome,
+                chaves: 0,
+                ultimaAtualizacao: serverTimestamp()
+            };
             
-            // For now, add to local array
-            this.mesas.push({ id, nome, chaves: 0, ultimaAtualizacao: new Date() });
+            // Add to Firestore using the ID as document ID
+            await setDoc(doc(db, 'mesas', id.toString()), novaMesa);
+            
+            // Add to local array
+            this.mesas.push({ 
+                id, 
+                nome, 
+                chaves: 0, 
+                ultimaAtualizacao: new Date() 
+            });
             
             document.getElementById('nova-mesa-form').reset();
             this.renderMesas();
@@ -221,7 +289,7 @@ class AdminSystem {
             
         } catch (error) {
             console.error('Erro ao criar mesa:', error);
-            this.showError('Erro ao criar mesa. Tente novamente.');
+            this.showError('Erro ao criar mesa: ' + error.message);
         }
     }
 
@@ -232,18 +300,34 @@ class AdminSystem {
         const quantidade = parseInt(document.getElementById('add-quantidade').value);
         const motivo = document.getElementById('add-motivo').value.trim();
         
+        const mesa = this.mesas.find(m => m.id === mesaId);
+        if (!mesa) {
+            this.showError('Mesa não encontrada.');
+            return;
+        }
+        
         try {
-            // TODO: Replace with actual Firebase Data Connect mutation
-            // await adicionarChaves({ mesaId, quantidade, motivo });
-            
-            // For now, update local data
-            const mesa = this.mesas.find(m => m.id === mesaId);
-            if (mesa) {
-                mesa.chaves += quantidade;
-                mesa.ultimaAtualizacao = new Date();
-            }
+            // Update mesa in Firestore
+            const mesaRef = doc(db, 'mesas', mesaId.toString());
+            await updateDoc(mesaRef, {
+                chaves: increment(quantidade),
+                ultimaAtualizacao: serverTimestamp()
+            });
             
             // Add to history
+            await addDoc(collection(db, 'historico'), {
+                mesaId: mesaId,
+                mesaNome: mesa.nome,
+                quantidade: quantidade,
+                motivo: motivo || 'Adição de chaves',
+                dataHora: serverTimestamp()
+            });
+            
+            // Update local data
+            mesa.chaves += quantidade;
+            mesa.ultimaAtualizacao = new Date();
+            
+            // Add to local history
             this.historico.unshift({
                 id: Date.now(),
                 mesa: { nome: mesa.nome },
@@ -262,7 +346,7 @@ class AdminSystem {
             
         } catch (error) {
             console.error('Erro ao adicionar chaves:', error);
-            this.showError('Erro ao adicionar chaves. Tente novamente.');
+            this.showError('Erro ao adicionar chaves: ' + error.message);
         }
     }
 
@@ -280,14 +364,27 @@ class AdminSystem {
         }
         
         try {
-            // TODO: Replace with actual Firebase Data Connect mutation
-            // await removerChaves({ mesaId, quantidade: -quantidade, motivo });
+            // Update mesa in Firestore
+            const mesaRef = doc(db, 'mesas', mesaId.toString());
+            await updateDoc(mesaRef, {
+                chaves: increment(-quantidade),
+                ultimaAtualizacao: serverTimestamp()
+            });
             
-            // For now, update local data
+            // Add to history
+            await addDoc(collection(db, 'historico'), {
+                mesaId: mesaId,
+                mesaNome: mesa.nome,
+                quantidade: -quantidade,
+                motivo: motivo,
+                dataHora: serverTimestamp()
+            });
+            
+            // Update local data
             mesa.chaves -= quantidade;
             mesa.ultimaAtualizacao = new Date();
             
-            // Add to history
+            // Add to local history
             this.historico.unshift({
                 id: Date.now(),
                 mesa: { nome: mesa.nome },
@@ -306,7 +403,7 @@ class AdminSystem {
             
         } catch (error) {
             console.error('Erro ao remover chaves:', error);
-            this.showError('Erro ao remover chaves. Tente novamente.');
+            this.showError('Erro ao remover chaves: ' + error.message);
         }
     }
 
@@ -317,10 +414,14 @@ class AdminSystem {
         const statusJogo = document.getElementById('status-jogo').value;
         
         try {
-            // TODO: Replace with actual Firebase Data Connect mutation
-            // await atualizarConfiguracaoJogo({ totalChaves, statusJogo });
+            const configRef = doc(db, 'configuracao', 'jogo');
+            await setDoc(configRef, {
+                totalChaves: totalChaves,
+                statusJogo: statusJogo,
+                ultimaAtualizacao: serverTimestamp()
+            });
             
-            // For now, update local config
+            // Update local config
             this.configuracao = { totalChaves, statusJogo };
             
             closeModal('config-modal');
@@ -329,7 +430,7 @@ class AdminSystem {
             
         } catch (error) {
             console.error('Erro ao atualizar configurações:', error);
-            this.showError('Erro ao atualizar configurações. Tente novamente.');
+            this.showError('Erro ao atualizar configurações: ' + error.message);
         }
     }
 

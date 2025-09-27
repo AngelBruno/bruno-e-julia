@@ -1,8 +1,14 @@
 // Ranking system for Bruno e Julia wedding project
-import { app } from '../firebase-config.js';
-
-// Data Connect client will be imported when generated
-// import { dataConnect } from '../src/dataconnect-generated/index.esm.js';
+import { app, db } from '../firebase-config.js';
+import { 
+    collection, 
+    getDocs, 
+    doc, 
+    getDoc,
+    onSnapshot,
+    query,
+    orderBy 
+} from 'firebase/firestore';
 
 class RankingSystem {
     constructor() {
@@ -32,22 +38,59 @@ class RankingSystem {
         this.showLoading();
         
         try {
-            // For now, use mock data until Data Connect is fully set up
-            const mockData = await this.getMockData();
-            
-            // TODO: Replace with actual Firebase Data Connect query
-            // const { data } = await listMesasRanking();
-            // this.mesas = data.mesas;
-            
-            this.mesas = mockData.sort((a, b) => b.chaves - a.chaves);
+            await this.loadMesasFromFirestore();
+            await this.loadConfigFromFirestore();
             this.renderRanking();
             this.hideLoading();
             
         } catch (error) {
             console.error('Erro ao carregar ranking:', error);
-            this.showError();
+            // Fallback to mock data if Firebase fails
+            const mockData = await this.getMockData();
+            this.mesas = mockData.sort((a, b) => b.chaves - a.chaves);
+            this.renderRanking();
+            this.hideLoading();
         } finally {
             this.isLoading = false;
+        }
+    }
+
+    async loadMesasFromFirestore() {
+        try {
+            const mesasRef = collection(db, 'mesas');
+            const q = query(mesasRef, orderBy('chaves', 'desc'));
+            
+            // Set up real-time listener
+            this.unsubscribe = onSnapshot(q, (querySnapshot) => {
+                this.mesas = [];
+                querySnapshot.forEach((doc) => {
+                    this.mesas.push({ id: doc.id, ...doc.data() });
+                });
+                
+                if (!this.isLoading) {
+                    this.renderRanking();
+                }
+            });
+            
+        } catch (error) {
+            console.error('Erro ao carregar mesas do Firestore:', error);
+            throw error;
+        }
+    }
+
+    async loadConfigFromFirestore() {
+        try {
+            const configRef = doc(db, 'configuracao', 'jogo');
+            const configDoc = await getDoc(configRef);
+            
+            if (configDoc.exists()) {
+                const configData = configDoc.data();
+                this.totalKeys = configData.totalChaves || 1000;
+            }
+        } catch (error) {
+            console.error('Erro ao carregar configuração:', error);
+            // Use default value
+            this.totalKeys = 1000;
         }
     }
 
@@ -134,6 +177,9 @@ class RankingSystem {
     destroy() {
         if (this.autoRefreshInterval) {
             clearInterval(this.autoRefreshInterval);
+        }
+        if (this.unsubscribe) {
+            this.unsubscribe();
         }
     }
 }
