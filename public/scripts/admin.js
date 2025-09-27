@@ -20,6 +20,7 @@ class AdminSystem {
         this.totalKeys = 1000;
         this.configuracao = { totalChaves: 1000, statusJogo: 'ativo' };
         this.historico = [];
+        this.isOnline = true;
         
         // Bind methods
         this.loadData = this.loadData.bind(this);
@@ -38,18 +39,38 @@ class AdminSystem {
     }
 
     setupEventListeners() {
-        // Form submissions
-        document.getElementById('nova-mesa-form').addEventListener('submit', (e) => this.handleNovaMesa(e));
-        document.getElementById('add-keys-form').addEventListener('submit', (e) => this.handleAddKeys(e));
-        document.getElementById('remove-keys-form').addEventListener('submit', (e) => this.handleRemoveKeys(e));
-        document.getElementById('config-form').addEventListener('submit', (e) => this.handleConfig(e));
+        try {
+            // Form submissions
+            const novaMenuForm = document.getElementById('nova-mesa-form');
+            const addKeysForm = document.getElementById('add-keys-form');
+            const removeKeysForm = document.getElementById('remove-keys-form');
+            const configForm = document.getElementById('config-form');
 
-        // Close modals when clicking outside
-        window.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                e.target.style.display = 'none';
+            if (novaMenuForm) {
+                novaMenuForm.addEventListener('submit', (e) => this.handleNovaMesa(e));
             }
-        });
+            if (addKeysForm) {
+                addKeysForm.addEventListener('submit', (e) => this.handleAddKeys(e));
+            }
+            if (removeKeysForm) {
+                removeKeysForm.addEventListener('submit', (e) => this.handleRemoveKeys(e));
+            }
+            if (configForm) {
+                configForm.addEventListener('submit', (e) => this.handleConfig(e));
+            }
+
+            // Close modals when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) {
+                    e.target.style.display = 'none';
+                }
+            });
+            
+            console.log('Event listeners configurados com sucesso');
+            
+        } catch (error) {
+            console.error('Erro ao configurar event listeners:', error);
+        }
     }
 
     async loadData() {
@@ -66,6 +87,7 @@ class AdminSystem {
             
         } catch (error) {
             console.error('Erro ao carregar dados:', error);
+            this.isOnline = false;
             
             // Fallback to mock data
             this.mesas = await this.getMockMesas();
@@ -76,7 +98,7 @@ class AdminSystem {
             this.renderStats();
             this.renderHistory();
             
-            this.showError('Conectado ao modo offline. Algumas funcionalidades podem estar limitadas.');
+            this.showError('Firebase indisponível. Usando dados locais. Configure o Firestore para funcionalidade completa.');
         }
     }
 
@@ -440,7 +462,7 @@ class AdminSystem {
         openModal('add-keys-modal');
     }
 
-    editMesa(mesaId) {
+    async editMesa(mesaId) {
         const mesa = this.mesas.find(m => m.id === mesaId);
         if (mesa) {
             const novoTotal = prompt(`Definir novo total de chaves para ${mesa.nome}:`, mesa.chaves);
@@ -448,23 +470,49 @@ class AdminSystem {
                 const novoTotalNum = parseInt(novoTotal);
                 const diferenca = novoTotalNum - mesa.chaves;
                 
-                mesa.chaves = novoTotalNum;
-                mesa.ultimaAtualizacao = new Date();
-                
-                // Add to history
-                this.historico.unshift({
-                    id: Date.now(),
-                    mesa: { nome: mesa.nome },
-                    quantidade: diferenca,
-                    motivo: 'Edição manual',
-                    dataHora: new Date()
-                });
-                
-                this.renderMesas();
-                this.renderStats();
-                this.renderHistory();
-                this.updateSelectOptions();
-                this.showSuccess(`Total de ${mesa.nome} atualizado para ${novoTotalNum} chaves!`);
+                try {
+                    if (this.isOnline) {
+                        // Update in Firestore
+                        const mesaRef = doc(db, 'mesas', mesaId.toString());
+                        await setDoc(mesaRef, {
+                            nome: mesa.nome,
+                            chaves: novoTotalNum,
+                            ultimaAtualizacao: serverTimestamp()
+                        }, { merge: true });
+                        
+                        // Add to history
+                        await addDoc(collection(db, 'historico'), {
+                            mesaId: mesaId,
+                            mesaNome: mesa.nome,
+                            quantidade: diferenca,
+                            motivo: 'Edição manual',
+                            dataHora: serverTimestamp()
+                        });
+                    }
+                    
+                    // Update local data
+                    mesa.chaves = novoTotalNum;
+                    mesa.ultimaAtualizacao = new Date();
+                    
+                    // Add to local history
+                    this.historico.unshift({
+                        id: Date.now(),
+                        mesa: { nome: mesa.nome },
+                        quantidade: diferenca,
+                        motivo: 'Edição manual',
+                        dataHora: new Date()
+                    });
+                    
+                    this.renderMesas();
+                    this.renderStats();
+                    this.renderHistory();
+                    this.updateSelectOptions();
+                    this.showSuccess(`Total de ${mesa.nome} atualizado para ${novoTotalNum} chaves!`);
+                    
+                } catch (error) {
+                    console.error('Erro ao editar mesa:', error);
+                    this.showError('Erro ao editar mesa: ' + error.message);
+                }
             }
         }
     }
@@ -536,16 +584,35 @@ window.resetGame = () => {
 // Initialize admin system
 let adminSystem;
 
-document.addEventListener('DOMContentLoaded', () => {
-    adminSystem = new AdminSystem();
-    
-    // Load config values into modal
-    document.getElementById('total-chaves-config').value = 1000;
-    document.getElementById('status-jogo').value = 'ativo';
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        console.log('Inicializando sistema administrativo...');
+        adminSystem = new AdminSystem();
+        window.adminSystem = adminSystem;
+        
+        // Load config values into modal
+        document.getElementById('total-chaves-config').value = 1000;
+        document.getElementById('status-jogo').value = 'ativo';
+        
+        console.log('Sistema administrativo inicializado com sucesso');
+        
+    } catch (error) {
+        console.error('Erro ao inicializar sistema administrativo:', error);
+        document.body.innerHTML = `
+            <div style="text-align: center; padding: 50px; color: red;">
+                <h2>Erro de Inicialização</h2>
+                <p>Erro: ${error.message}</p>
+                <button onclick="location.reload()">Tentar Novamente</button>
+            </div>
+        `;
+    }
 });
 
-// Make adminSystem globally available
-window.adminSystem = null;
-document.addEventListener('DOMContentLoaded', () => {
-    window.adminSystem = adminSystem;
+// Error handling for uncaught errors
+window.addEventListener('error', (event) => {
+    console.error('Erro global capturado:', event.error);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('Promise rejeitada:', event.reason);
 });

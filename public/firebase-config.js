@@ -21,6 +21,6 @@ const analytics = getAnalytics(app);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-console.log('Firebase inicializado:', { app, db, auth });
+// Firebase initialized successfully
 
 export { app, analytics, db, auth };

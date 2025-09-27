@@ -282,3 +282,13 @@ img:not([src="URL_DIRETO_DA_IMAGEM_LOGO.PNG"]):not([src=""]):not([src="URL_DIRET
         padding: 10px 25px;
     }
 }
+
+/* No data message */
+.no-data {
+    text-align: center;
+    font-size: 16px;
+    color: #666;
+    padding: 40px 20px;
+    font-style: italic;
+    line-height: 1.5;
+}

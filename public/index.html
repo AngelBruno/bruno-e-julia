@@ -3,183 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bruno e Julia - Projeto Firebase</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap');
-        
-        body {
-            font-family: 'Cinzel', serif;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #083D56;
-            text-align: center;
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 20px;
-        }
-        h2 {
-            color: #083D56;
-            font-size: 24px;
-            font-weight: 600;
-            margin: 30px 0 20px;
-        }
-        h3 {
-            color: #083D56;
-            font-size: 20px;
-            font-weight: 600;
-            margin: 25px 0 15px;
-        }
-        .status {
-            text-align: center;
-            margin: 20px 0 40px;
-            padding: 20px;
-            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
-            border-left: 4px solid #28a745;
-            border-radius: 10px;
-            font-weight: 500;
-        }
-        .app-links {
-            margin: 40px 0;
-            padding: 30px;
-            background: #f8f9fa;
-            border-radius: 15px;
-        }
-        .links-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .app-link {
-            display: block;
-            text-decoration: none;
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-            text-align: center;
-        }
-        .app-link:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            border-color: #083D56;
-        }
-        .link-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-        .link-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #083D56;
-            margin-bottom: 10px;
-        }
-        .link-description {
-            font-size: 14px;
-            color: #6c757d;
-            font-weight: 400;
-        }
-        .project-info {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 15px;
-            margin-top: 30px;
-        }
-        ul, ol {
-            padding-left: 25px;
-        }
-        li {
-            margin: 8px 0;
-            line-height: 1.6;
-        }
-        
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            .container {
-                padding: 25px;
-            }
-            h1 {
-                font-size: 26px;
-            }
-            .links-grid {
-                grid-template-columns: 1fr;
-            }
-            .app-link {
-                padding: 20px;
-            }
-        }
-    </style>
+    <title>Gravata dos Noivos - Bruno e Julia</title>
+    <link rel="stylesheet" href="./styles/index.css">
 </head>
 <body>
     <div class="container">
-        <h1>🎉 Projeto Bruno e Julia</h1>
-        <div class="status">
-            <p><strong>Status:</strong> Sistema de Ranking implementado com sucesso!</p>
-            <p><strong>Data Connect:</strong> Integração com Firebase Data Connect configurada</p>
-        </div>
+        <h1>GRAVATA DOS NOIVOS</h1>
+        <h2>Bruno & Julia</h2>
         
-        <div class="app-links">
-            <h2>🎩 Gravata dos Noivos - Sistema de Ranking</h2>
-            <div class="links-grid">
-                <a href="ranking.html" class="app-link">
-                    <div class="link-icon">🏆</div>
-                    <div class="link-title">Ranking Público</div>
-                    <div class="link-description">Visualizar o ranking atual das mesas</div>
-                </a>
-                
-                <a href="admin.html" class="app-link">
-                    <div class="link-icon">⚙️</div>
-                    <div class="link-title">Administração</div>
-                    <div class="link-description">Gerenciar mesas e pontuações</div>
-                </a>
-            </div>
-        </div>
-
-        <div class="project-info">
-            <h3>📋 Funcionalidades Implementadas:</h3>
-            <ul>
-                <li>✅ Sistema de ranking em tempo real</li>
-                <li>✅ Interface pública para visualização</li>
-                <li>✅ Painel administrativo completo</li>
-                <li>✅ Integração com Firebase Data Connect</li>
-                <li>✅ Design responsivo e elegante</li>
-                <li>✅ Histórico de ações e auditoria</li>
-            </ul>
-            
-            <h3>🎯 Como funciona:</h3>
-            <ol>
-                <li>Cada mesa participa do jogo coletando chaves</li>
-                <li>O ranking é atualizado em tempo real</li>
-                <li>Administradores podem gerenciar pontuações</li>
-                <li>Sistema de auditoria registra todas as ações</li>
-            </ol>
+        <div class="buttons">
+            <a href="ranking.html" class="btn btn-primary">
+                🏆 Ver Ranking
+            </a>
+            <a href="admin.html" class="btn btn-secondary">
+                ⚙️ Painel Admin
+            </a>
         </div>
     </div>
-
-    <!-- Firebase SDK -->
-    <script type="module">
-        // Import Firebase configuration
-        import { app, analytics } from './firebase-config.js';
-        
-        console.log('Firebase inicializado com sucesso!');
-        console.log('App:', app);
-        console.log('Analytics:', analytics);
-    </script>
 </body>
 </html>

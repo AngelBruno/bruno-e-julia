@@ -7,9 +7,9 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: 'public/index.html',
-        ranking: 'public/ranking.html',
-        admin: 'public/admin.html'
+        main: 'index.html',
+        ranking: 'ranking.html',
+        admin: 'admin.html'
       }
     }
   },
