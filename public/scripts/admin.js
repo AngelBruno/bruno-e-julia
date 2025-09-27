@@ -172,7 +172,7 @@ function updateMesasList() {
     
     container.innerHTML = '';
     
-    const sortedMesas = [...mesas].sort((a, b) => a.id - b.id).sort((a, b) => b.chaves - a.chaves);
+    const sortedMesas = [...mesas].sort((a, b) => a.id - b.id);
     
     sortedMesas.forEach((mesa, index) => {
         const position = index + 1;
@@ -250,7 +250,7 @@ function showNotification(message, type = 'info') {
 
 // Função para sortear número 
 window.sortearNumero = () => {
-    const max = document.getElementById('sort-max').value
+    const max = mesas.reduce((sum, mesa) => sum + mesa.chaves, 0);
     const numero = Math.floor(Math.random() * max) + 1;
     document.getElementById('resultado-sorteio').textContent = numero;
 };

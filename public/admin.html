@@ -143,7 +143,7 @@
                 </div>
                 <div class="form-group">
                     <label for="remove-motivo">Motivo:</label>
-                    <input type="text" id="remove-motivo" placeholder="Ex: Correção de erro" required>
+                    <input type="text" id="remove-motivo" placeholder="Ex: Correção de erro">
                 </div>
                 <button type="submit" class="btn btn-primary">Remover</button>
                 <button type="button" class="btn btn-secondary" onclick="closeModal('remove-keys-modal')">Cancelar</button>
@@ -180,10 +180,6 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal('sorteio-modal')">&times;</span>
             <h3>Sorteio de Número</h3>
-            <div class="form-group">
-                <label for="sort-max">Número Máx:</label>
-                <input type="number" id="sort-max" required min="1">
-            </div>
             <div class="form-group" style="text-align:center;">
                 <button type="button" class="btn btn-primary" onclick="sortearNumero()">Sortear Número</button>
             </div>

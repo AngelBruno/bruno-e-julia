@@ -89,7 +89,9 @@ function renderMesasList() {
 
     const totalKeys = 1000; // Default total keys
     
-    mesas.forEach((mesa) => {
+    const sortedMesas = [...mesas].sort((a, b) => a.id - b.id).sort((a, b) => b.chaves - a.chaves).slice(0, 5);
+
+    sortedMesas.forEach((mesa) => {
         const percentage = totalKeys > 0 ? (mesa.chaves / totalKeys) * 100 : 0;
         
         const mesaRow = document.createElement('div');
