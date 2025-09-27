@@ -1,4 +1,4 @@
-// Admin system for Bruno e Julia wedding project
+// Simplified and working admin system
 import { app, db } from '../firebase-config.js';
 import { 
     collection, 
@@ -6,613 +6,362 @@ import {
     updateDoc, 
     doc, 
     getDocs, 
-    getDoc,
     setDoc,
     increment,
+    serverTimestamp,
+    onSnapshot,
     query,
-    orderBy,
-    serverTimestamp 
+    orderBy
 } from 'firebase/firestore';
 
-class AdminSystem {
-    constructor() {
-        this.mesas = [];
-        this.totalKeys = 1000;
-        this.configuracao = { totalChaves: 1000, statusJogo: 'ativo' };
-        this.historico = [];
-        this.isOnline = true;
-        
-        // Bind methods
-        this.loadData = this.loadData.bind(this);
-        this.renderMesas = this.renderMesas.bind(this);
-        this.renderStats = this.renderStats.bind(this);
-        this.renderHistory = this.renderHistory.bind(this);
-        
-        // Initialize
-        this.init();
+// Admin system for Bruno e Julia wedding
+
+// Global variables
+let mesas = [];
+let isOnline = true;
+
+// Test Firebase connection
+async function testConnection() {
+    try {
+        const testRef = collection(db, 'mesas');
+        const snapshot = await getDocs(testRef);
+        return true;
+    } catch (error) {
+        console.error('Firebase connection failed:', error);
+        isOnline = false;
+        return false;
     }
+}
 
-    async init() {
-        this.setupEventListeners();
-        await this.loadData();
-        this.updateSelectOptions();
-    }
-
-    setupEventListeners() {
-        try {
-            // Form submissions
-            const novaMenuForm = document.getElementById('nova-mesa-form');
-            const addKeysForm = document.getElementById('add-keys-form');
-            const removeKeysForm = document.getElementById('remove-keys-form');
-            const configForm = document.getElementById('config-form');
-
-            if (novaMenuForm) {
-                novaMenuForm.addEventListener('submit', (e) => this.handleNovaMesa(e));
-            }
-            if (addKeysForm) {
-                addKeysForm.addEventListener('submit', (e) => this.handleAddKeys(e));
-            }
-            if (removeKeysForm) {
-                removeKeysForm.addEventListener('submit', (e) => this.handleRemoveKeys(e));
-            }
-            if (configForm) {
-                configForm.addEventListener('submit', (e) => this.handleConfig(e));
-            }
-
-            // Close modals when clicking outside
-            window.addEventListener('click', (e) => {
-                if (e.target.classList.contains('modal')) {
-                    e.target.style.display = 'none';
-                }
-            });
-            
-            console.log('Event listeners configurados com sucesso');
-            
-        } catch (error) {
-            console.error('Erro ao configurar event listeners:', error);
-        }
-    }
-
-    async loadData() {
-        try {
-            await Promise.all([
-                this.loadMesasFromFirestore(),
-                this.loadConfigFromFirestore(),
-                this.loadHistoryFromFirestore()
-            ]);
-            
-            this.renderMesas();
-            this.renderStats();
-            this.renderHistory();
-            
-        } catch (error) {
-            console.error('Erro ao carregar dados:', error);
-            this.isOnline = false;
-            
-            // Fallback to mock data
-            this.mesas = await this.getMockMesas();
-            this.configuracao = await this.getMockConfig();
-            this.historico = await this.getMockHistory();
-            
-            this.renderMesas();
-            this.renderStats();
-            this.renderHistory();
-            
-            this.showError('Firebase indisponível. Usando dados locais. Configure o Firestore para funcionalidade completa.');
-        }
-    }
-
-    async loadMesasFromFirestore() {
+// Load and listen to mesas
+async function setupMesasListener() {
+    try {
         const mesasRef = collection(db, 'mesas');
-        const querySnapshot = await getDocs(mesasRef);
+        const q = query(mesasRef, orderBy('chaves', 'desc'));
         
-        this.mesas = [];
-        querySnapshot.forEach((doc) => {
-            this.mesas.push({ 
-                id: parseInt(doc.id), 
-                ...doc.data() 
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            mesas = [];
+            
+            snapshot.forEach((doc) => {
+                const mesaData = {
+                    id: parseInt(doc.id),
+                    ...doc.data(),
+                    ultimaAtualizacao: doc.data().ultimaAtualizacao?.toDate() || new Date()
+                };
+                mesas.push(mesaData);
             });
+            
+            // Update UI
+            updateMesasList();
+            updateSelectOptions();
+            updateStats();
         });
-    }
-
-    async loadConfigFromFirestore() {
-        const configRef = doc(db, 'configuracao', 'jogo');
-        const configDoc = await getDoc(configRef);
         
-        if (configDoc.exists()) {
-            this.configuracao = configDoc.data();
-        } else {
-            // Create default config
-            this.configuracao = { totalChaves: 1000, statusJogo: 'ativo' };
-            await setDoc(configRef, this.configuracao);
-        }
-    }
-
-    async loadHistoryFromFirestore() {
-        const historyRef = collection(db, 'historico');
-        const q = query(historyRef, orderBy('dataHora', 'desc'));
-        const querySnapshot = await getDocs(q);
+        window.mesasUnsubscribe = unsubscribe;
         
-        this.historico = [];
-        querySnapshot.forEach((doc) => {
-            this.historico.push({ 
-                id: doc.id, 
-                ...doc.data(),
-                dataHora: doc.data().dataHora?.toDate() || new Date()
-            });
-        });
+    } catch (error) {
+        console.error('❌ Error setting up mesas listener:', error);
     }
+}
 
-    // Mock data methods - replace with actual Firebase calls
-    async getMockMesas() {
-        return [
-            { id: 1, nome: 'MESA 01', chaves: 20, ultimaAtualizacao: new Date() },
-            { id: 2, nome: 'MESA 02', chaves: 330, ultimaAtualizacao: new Date() },
-            { id: 3, nome: 'MESA 03', chaves: 50, ultimaAtualizacao: new Date() },
-            { id: 5, nome: 'MESA 05', chaves: 420, ultimaAtualizacao: new Date() },
-            { id: 8, nome: 'MESA 08', chaves: 180, ultimaAtualizacao: new Date() },
-            { id: 11, nome: 'MESA 11', chaves: 250, ultimaAtualizacao: new Date() },
-            { id: 15, nome: 'MESA 15', chaves: 100, ultimaAtualizacao: new Date() },
-        ];
-    }
-
-    async getMockConfig() {
-        return { totalChaves: 1000, statusJogo: 'ativo' };
-    }
-
-    async getMockHistory() {
-        return [
-            { 
-                id: 1, 
-                mesa: { nome: 'MESA 05' }, 
-                quantidade: 50, 
-                motivo: 'Completou desafio principal', 
-                dataHora: new Date(Date.now() - 60000) 
-            },
-            { 
-                id: 2, 
-                mesa: { nome: 'MESA 02' }, 
-                quantidade: 30, 
-                motivo: 'Participação ativa', 
-                dataHora: new Date(Date.now() - 120000) 
-            },
-            { 
-                id: 3, 
-                mesa: { nome: 'MESA 11' }, 
-                quantidade: -10, 
-                motivo: 'Correção de pontuação', 
-                dataHora: new Date(Date.now() - 180000) 
-            },
-        ];
-    }
-
-    renderMesas() {
-        const container = document.getElementById('mesas-container');
-        container.innerHTML = '';
-
-        // Sort by chaves (descending)
-        const sortedMesas = [...this.mesas].sort((a, b) => b.chaves - a.chaves);
-
-        sortedMesas.forEach((mesa, index) => {
-            const mesaElement = document.createElement('div');
-            mesaElement.className = 'mesa-item';
-            
-            const position = index + 1;
-            const medal = position === 1 ? '🥇' : position === 2 ? '🥈' : position === 3 ? '🥉' : `${position}º`;
-            
-            mesaElement.innerHTML = `
-                <div class="mesa-info">
-                    <div class="mesa-nome">${medal} ${mesa.nome}</div>
-                    <div class="mesa-chaves">${mesa.chaves} chaves</div>
-                </div>
-                <div class="mesa-actions">
-                    <button class="btn btn-sm btn-primary" onclick="adminSystem.quickAddKeys(${mesa.id})">
-                        ➕ Chaves
-                    </button>
-                    <button class="btn btn-sm btn-secondary" onclick="adminSystem.editMesa(${mesa.id})">
-                        ✏️ Editar
-                    </button>
-                </div>
-            `;
-            
-            container.appendChild(mesaElement);
-        });
-    }
-
-    renderStats() {
-        const totalChavesDistribuidas = this.mesas.reduce((sum, mesa) => sum + mesa.chaves, 0);
-        const chavesRestantes = this.configuracao.totalChaves - totalChavesDistribuidas;
-
-        document.getElementById('total-chaves').textContent = totalChavesDistribuidas;
-        document.getElementById('total-mesas').textContent = this.mesas.length;
-        document.getElementById('chaves-restantes').textContent = Math.max(0, chavesRestantes);
-    }
-
-    renderHistory() {
-        const container = document.getElementById('history-container');
-        container.innerHTML = '';
-
-        if (this.historico.length === 0) {
-            container.innerHTML = '<p class="loading">Nenhum registro encontrado.</p>';
-            return;
-        }
-
-        this.historico.forEach(registro => {
-            const historyElement = document.createElement('div');
-            historyElement.className = `history-item ${registro.quantidade < 0 ? 'negative' : ''}`;
-            
-            const timeAgo = this.getTimeAgo(registro.dataHora);
-            const action = registro.quantidade > 0 ? 'Ganhou' : registro.quantidade < 0 ? 'Perdeu' : 'Redefiniu';
-            const amount = Math.abs(registro.quantidade);
-            
-            historyElement.innerHTML = `
-                <div>
-                    <strong>${registro.mesa.nome}</strong> ${action} ${amount} chaves
-                    ${registro.motivo ? `- ${registro.motivo}` : ''}
-                </div>
-                <div class="history-meta">${timeAgo}</div>
-            `;
-            
-            container.appendChild(historyElement);
-        });
-    }
-
-    updateSelectOptions() {
-        const selects = ['add-mesa-select', 'remove-mesa-select'];
+// Create new mesa
+async function createMesa(id, nome) {
+    try {
+        const mesaData = {
+            nome: nome,
+            chaves: 0,
+            ultimaAtualizacao: serverTimestamp()
+        };
         
-        selects.forEach(selectId => {
-            const select = document.getElementById(selectId);
-            select.innerHTML = '<option value="">Selecione uma mesa</option>';
-            
-            this.mesas.forEach(mesa => {
-                const option = document.createElement('option');
-                option.value = mesa.id;
-                option.textContent = `${mesa.nome} (${mesa.chaves} chaves)`;
-                select.appendChild(option);
-            });
-        });
+        await setDoc(doc(db, 'mesas', id.toString()), mesaData);
+        showNotification(`Mesa "${nome}" criada com sucesso!`, 'success');
+        return true;
+        
+    } catch (error) {
+        console.error('Error creating mesa:', error);
+        showNotification('Erro ao criar mesa: ' + error.message, 'error');
+        return false;
     }
+}
 
-    async handleNovaMesa(e) {
-        e.preventDefault();
-        
-        const id = parseInt(document.getElementById('mesa-id').value);
-        const nome = document.getElementById('mesa-nome').value.trim();
-        
-        // Check if mesa already exists
-        if (this.mesas.find(m => m.id === id)) {
-            this.showError('Já existe uma mesa com este ID.');
-            return;
+// Add keys to mesa
+async function addKeysToMesa(mesaId, quantidade, motivo) {
+    try {
+        const currentMesa = mesas.find(m => m.id === mesaId);
+        if (!currentMesa) {
+            throw new Error('Mesa não encontrada');
         }
         
+        const mesaRefStr = mesaId > 9 ? mesaId.toString() : '0' + mesaId.toString();
+        const mesaRef = doc(db, 'mesas', mesaRefStr);
+        await updateDoc(mesaRef, {
+            chaves: increment(quantidade),
+            ultimaAtualizacao: serverTimestamp()
+        });
+        
+        // Add to history
         try {
-            const novaMesa = {
-                nome,
-                chaves: 0,
-                ultimaAtualizacao: serverTimestamp()
-            };
-            
-            // Add to Firestore using the ID as document ID
-            await setDoc(doc(db, 'mesas', id.toString()), novaMesa);
-            
-            // Add to local array
-            this.mesas.push({ 
-                id, 
-                nome, 
-                chaves: 0, 
-                ultimaAtualizacao: new Date() 
-            });
-            
-            document.getElementById('nova-mesa-form').reset();
-            this.renderMesas();
-            this.renderStats();
-            this.updateSelectOptions();
-            this.showSuccess('Mesa criada com sucesso!');
-            
-        } catch (error) {
-            console.error('Erro ao criar mesa:', error);
-            this.showError('Erro ao criar mesa: ' + error.message);
-        }
-    }
-
-    async handleAddKeys(e) {
-        e.preventDefault();
-        
-        const mesaId = parseInt(document.getElementById('add-mesa-select').value);
-        const quantidade = parseInt(document.getElementById('add-quantidade').value);
-        const motivo = document.getElementById('add-motivo').value.trim();
-        
-        const mesa = this.mesas.find(m => m.id === mesaId);
-        if (!mesa) {
-            this.showError('Mesa não encontrada.');
-            return;
-        }
-        
-        try {
-            // Update mesa in Firestore
-            const mesaRef = doc(db, 'mesas', mesaId.toString());
-            await updateDoc(mesaRef, {
-                chaves: increment(quantidade),
-                ultimaAtualizacao: serverTimestamp()
-            });
-            
-            // Add to history
             await addDoc(collection(db, 'historico'), {
-                mesaId: mesaId,
-                mesaNome: mesa.nome,
+                mesaId: mesaRefStr,
+                mesaNome: currentMesa.nome,
                 quantidade: quantidade,
                 motivo: motivo || 'Adição de chaves',
                 dataHora: serverTimestamp()
             });
-            
-            // Update local data
-            mesa.chaves += quantidade;
-            mesa.ultimaAtualizacao = new Date();
-            
-            // Add to local history
-            this.historico.unshift({
-                id: Date.now(),
-                mesa: { nome: mesa.nome },
-                quantidade,
-                motivo,
-                dataHora: new Date()
-            });
-            
-            closeModal('add-keys-modal');
-            document.getElementById('add-keys-form').reset();
-            this.renderMesas();
-            this.renderStats();
-            this.renderHistory();
-            this.updateSelectOptions();
-            this.showSuccess(`${quantidade} chaves adicionadas à ${mesa.nome}!`);
-            
-        } catch (error) {
-            console.error('Erro ao adicionar chaves:', error);
-            this.showError('Erro ao adicionar chaves: ' + error.message);
-        }
-    }
-
-    async handleRemoveKeys(e) {
-        e.preventDefault();
-        
-        const mesaId = parseInt(document.getElementById('remove-mesa-select').value);
-        const quantidade = parseInt(document.getElementById('remove-quantidade').value);
-        const motivo = document.getElementById('remove-motivo').value.trim();
-        
-        const mesa = this.mesas.find(m => m.id === mesaId);
-        if (!mesa || mesa.chaves < quantidade) {
-            this.showError('A mesa não possui chaves suficientes.');
-            return;
+        } catch (historyError) {
+            console.warn('Could not add to history:', historyError.message);
         }
         
-        try {
-            // Update mesa in Firestore
-            const mesaRef = doc(db, 'mesas', mesaId.toString());
-            await updateDoc(mesaRef, {
-                chaves: increment(-quantidade),
-                ultimaAtualizacao: serverTimestamp()
-            });
-            
-            // Add to history
-            await addDoc(collection(db, 'historico'), {
-                mesaId: mesaId,
-                mesaNome: mesa.nome,
-                quantidade: -quantidade,
-                motivo: motivo,
-                dataHora: serverTimestamp()
-            });
-            
-            // Update local data
-            mesa.chaves -= quantidade;
-            mesa.ultimaAtualizacao = new Date();
-            
-            // Add to local history
-            this.historico.unshift({
-                id: Date.now(),
-                mesa: { nome: mesa.nome },
-                quantidade: -quantidade,
-                motivo,
-                dataHora: new Date()
-            });
-            
-            closeModal('remove-keys-modal');
-            document.getElementById('remove-keys-form').reset();
-            this.renderMesas();
-            this.renderStats();
-            this.renderHistory();
-            this.updateSelectOptions();
-            this.showSuccess(`${quantidade} chaves removidas de ${mesa.nome}!`);
-            
-        } catch (error) {
-            console.error('Erro ao remover chaves:', error);
-            this.showError('Erro ao remover chaves: ' + error.message);
-        }
-    }
-
-    async handleConfig(e) {
-        e.preventDefault();
+        showNotification(`${quantidade} chaves adicionadas!`, 'success');
+        return true;
         
-        const totalChaves = parseInt(document.getElementById('total-chaves-config').value);
-        const statusJogo = document.getElementById('status-jogo').value;
-        
-        try {
-            const configRef = doc(db, 'configuracao', 'jogo');
-            await setDoc(configRef, {
-                totalChaves: totalChaves,
-                statusJogo: statusJogo,
-                ultimaAtualizacao: serverTimestamp()
-            });
-            
-            // Update local config
-            this.configuracao = { totalChaves, statusJogo };
-            
-            closeModal('config-modal');
-            this.renderStats();
-            this.showSuccess('Configurações atualizadas!');
-            
-        } catch (error) {
-            console.error('Erro ao atualizar configurações:', error);
-            this.showError('Erro ao atualizar configurações: ' + error.message);
-        }
-    }
-
-    quickAddKeys(mesaId) {
-        document.getElementById('add-mesa-select').value = mesaId;
-        document.getElementById('add-quantidade').value = '10';
-        openModal('add-keys-modal');
-    }
-
-    async editMesa(mesaId) {
-        const mesa = this.mesas.find(m => m.id === mesaId);
-        if (mesa) {
-            const novoTotal = prompt(`Definir novo total de chaves para ${mesa.nome}:`, mesa.chaves);
-            if (novoTotal !== null && !isNaN(novoTotal)) {
-                const novoTotalNum = parseInt(novoTotal);
-                const diferenca = novoTotalNum - mesa.chaves;
-                
-                try {
-                    if (this.isOnline) {
-                        // Update in Firestore
-                        const mesaRef = doc(db, 'mesas', mesaId.toString());
-                        await setDoc(mesaRef, {
-                            nome: mesa.nome,
-                            chaves: novoTotalNum,
-                            ultimaAtualizacao: serverTimestamp()
-                        }, { merge: true });
-                        
-                        // Add to history
-                        await addDoc(collection(db, 'historico'), {
-                            mesaId: mesaId,
-                            mesaNome: mesa.nome,
-                            quantidade: diferenca,
-                            motivo: 'Edição manual',
-                            dataHora: serverTimestamp()
-                        });
-                    }
-                    
-                    // Update local data
-                    mesa.chaves = novoTotalNum;
-                    mesa.ultimaAtualizacao = new Date();
-                    
-                    // Add to local history
-                    this.historico.unshift({
-                        id: Date.now(),
-                        mesa: { nome: mesa.nome },
-                        quantidade: diferenca,
-                        motivo: 'Edição manual',
-                        dataHora: new Date()
-                    });
-                    
-                    this.renderMesas();
-                    this.renderStats();
-                    this.renderHistory();
-                    this.updateSelectOptions();
-                    this.showSuccess(`Total de ${mesa.nome} atualizado para ${novoTotalNum} chaves!`);
-                    
-                } catch (error) {
-                    console.error('Erro ao editar mesa:', error);
-                    this.showError('Erro ao editar mesa: ' + error.message);
-                }
-            }
-        }
-    }
-
-    getTimeAgo(date) {
-        const now = new Date();
-        const diff = now - new Date(date);
-        const minutes = Math.floor(diff / 60000);
-        
-        if (minutes < 1) return 'Agora mesmo';
-        if (minutes < 60) return `${minutes} min atrás`;
-        
-        const hours = Math.floor(minutes / 60);
-        if (hours < 24) return `${hours}h atrás`;
-        
-        const days = Math.floor(hours / 24);
-        return `${days} dias atrás`;
-    }
-
-    showSuccess(message) {
-        // Simple success notification
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed; top: 20px; right: 20px; z-index: 1001;
-            background: #28a745; color: white; padding: 15px 20px;
-            border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        `;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 3000);
-    }
-
-    showError(message) {
-        // Simple error notification
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed; top: 20px; right: 20px; z-index: 1001;
-            background: #dc3545; color: white; padding: 15px 20px;
-            border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        `;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 5000);
+    } catch (error) {
+        console.error('Error adding keys:', error);
+        showNotification('Erro ao adicionar chaves: ' + error.message, 'error');
+        return false;
     }
 }
 
-// Global modal functions
+// Remove keys to mesa
+async function removeKeysToMesa(mesaId, quantidade, motivo) {
+    try {
+        const currentMesa = mesas.find(m => m.id === mesaId);
+        if (!currentMesa) {
+            throw new Error('Mesa não encontrada');
+        }
+        
+        const mesaRefStr = mesaId > 9 ? mesaId.toString() : '0' + mesaId.toString();
+        const mesaRef = doc(db, 'mesas', mesaRefStr);
+        await updateDoc(mesaRef, {
+            chaves: decrement(quantidade),
+            ultimaAtualizacao: serverTimestamp()
+        });
+        
+        // Add to history
+        try {
+            await addDoc(collection(db, 'historico'), {
+                mesaId: mesaId,
+                mesaNome: currentMesa.nome || 'Unknown',
+                quantidade: quantidade,
+                motivo: motivo || 'Adição de chaves',
+                dataHora: serverTimestamp()
+            });
+        } catch (historyError) {
+            console.warn('Could not add to history:', historyError.message);
+        }
+        
+        showNotification(`${quantidade} chaves adicionadas!`, 'success');
+        return true;
+        
+    } catch (error) {
+        console.error('Error adding keys:', error);
+        showNotification('Erro ao adicionar chaves: ' + error.message, 'error');
+        return false;
+    }
+}
+
+// UI Update Functions
+function updateMesasList() {
+    const container = document.getElementById('mesas-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    const sortedMesas = [...mesas].sort((a, b) => b.chaves - a.chaves).sort((a, b) => a.id - b.id);
+    
+    sortedMesas.forEach((mesa, index) => {
+        const position = index + 1;
+        const medal = position === 1 ? '🥇' : position === 2 ? '🥈' : position === 3 ? '🥉' : `${position}º`;
+        
+        const div = document.createElement('div');
+        div.className = 'mesa-item';
+        div.innerHTML = `
+            <div class="mesa-info">
+                <div class="mesa-nome">${medal} ${mesa.nome}</div>
+                <div class="mesa-chaves">${mesa.chaves} chaves</div>
+            </div>
+            <div class="mesa-actions">
+                <button class="btn btn-sm btn-primary" onclick="quickAddKeys(${mesa.id})">
+                    ➕ Chaves
+                </button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+    
+
+}
+
+function updateSelectOptions() {
+    const selects = ['add-mesa-select', 'remove-mesa-select'];
+    
+    selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        
+        select.innerHTML = '<option value="">Selecione uma mesa</option>';
+        
+        mesas.forEach(mesa => {
+            const option = document.createElement('option');
+            option.value = mesa.id;
+            option.textContent = `${mesa.nome} (${mesa.chaves} chaves)`;
+            select.appendChild(option);
+        });
+    });
+}
+
+function updateStats() {
+    const totalChaves = mesas.reduce((sum, mesa) => sum + mesa.chaves, 0);
+    const totalMesas = mesas.length;
+    const chavesRestantes = Math.max(0, 1000 - totalChaves);
+    
+    const totalChavesEl = document.getElementById('total-chaves');
+    const totalMesasEl = document.getElementById('total-mesas');
+    const chavesRestantesEl = document.getElementById('chaves-restantes');
+    
+    if (totalChavesEl) totalChavesEl.textContent = totalChaves;
+    if (totalMesasEl) totalMesasEl.textContent = totalMesas;
+    if (chavesRestantesEl) chavesRestantesEl.textContent = chavesRestantes;
+}
+
+function showNotification(message, type = 'info') {
+    const div = document.createElement('div');
+    div.style.cssText = `
+        position: fixed; top: 20px; right: 20px; z-index: 1001;
+        background: ${type === 'error' ? '#dc3545' : '#28a745'}; 
+        color: white; padding: 15px 20px;
+        border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        max-width: 300px; word-wrap: break-word;
+    `;
+    div.textContent = message;
+    document.body.appendChild(div);
+    
+    setTimeout(() => {
+        if (document.body.contains(div)) {
+            document.body.removeChild(div);
+        }
+    }, type === 'error' ? 5000 : 3000);
+}
+
+// Global functions for buttons
+window.quickAddKeys = (mesaId) => {
+    document.getElementById('add-mesa-select').value = mesaId;
+    document.getElementById('add-quantidade').value = '';
+    openModal('add-keys-modal');
+};
+
 window.openModal = (modalId) => {
-    document.getElementById(modalId).style.display = 'block';
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'block';
+    }
 };
 
 window.closeModal = (modalId) => {
-    document.getElementById(modalId).style.display = 'none';
-};
-
-window.resetGame = () => {
-    if (confirm('Tem certeza que deseja resetar o jogo? Esta ação não pode ser desfeita.')) {
-        // TODO: Implement reset functionality
-        alert('Funcionalidade de reset será implementada com o Firebase Data Connect.');
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
     }
 };
 
-// Initialize admin system
-let adminSystem;
-
+// Initialize everything
 document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        console.log('Inicializando sistema administrativo...');
-        adminSystem = new AdminSystem();
-        window.adminSystem = adminSystem;
-        
-        // Load config values into modal
-        document.getElementById('total-chaves-config').value = 1000;
-        document.getElementById('status-jogo').value = 'ativo';
-        
-        console.log('Sistema administrativo inicializado com sucesso');
-        
-    } catch (error) {
-        console.error('Erro ao inicializar sistema administrativo:', error);
-        document.body.innerHTML = `
-            <div style="text-align: center; padding: 50px; color: red;">
-                <h2>Erro de Inicialização</h2>
-                <p>Erro: ${error.message}</p>
-                <button onclick="location.reload()">Tentar Novamente</button>
-            </div>
-        `;
+    
+    // Test connection
+    const connected = await testConnection();
+    
+    if (connected) {
+        // Set up real-time listeners
+        await setupMesasListener();
+    } else {
+        showNotification('Firebase não configurado. Configure o Firestore para usar o sistema.', 'error');
     }
-});
+    
+    // Set up form handlers
+    const novaMesaForm = document.getElementById('nova-mesa-form');
+    if (novaMesaForm) {
+        novaMesaForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const idElement = document.getElementById('mesa-id');
+            const nomeElement = document.getElementById('mesa-nome');
+            
+            const idValue = idElement?.value;
+            const nomeValue = nomeElement?.value;
+            
+            const id = parseInt(idValue);
+            const nome = nomeValue?.trim();
+            
+            if (!id || !nome) {
+                showNotification('Preencha todos os campos', 'error');
+                return;
+            }
+            
+            const existingMesa = mesas.find(m => m.id === id);
+            if (existingMesa) {
+                showNotification('Mesa com este ID já existe', 'error');
+                return;
+            }
+            
+            const success = await createMesa(id, nome);
+            
+            if (success) {
+                novaMesaForm.reset();
+            }
+        });
+    } else {
+        console.error('❌ Form "nova-mesa-form" not found!');
+    }
+    
+    const addKeysForm = document.getElementById('add-keys-form');
+    if (addKeysForm) {
+        addKeysForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const mesaId = parseInt(document.getElementById('add-mesa-select').value);
+            const quantidade = parseInt(document.getElementById('add-quantidade').value);
+            const motivo = document.getElementById('add-motivo').value.trim();
+            
+            if (!mesaId || !quantidade) {
+                showNotification('Selecione mesa e quantidade', 'error');
+                return;
+            }
+            
+            const success = await addKeysToMesa(mesaId, quantidade, motivo);
+            if (success) {
+                closeModal('add-keys-modal');
+                addKeysForm.reset();
+            }
+        });
+    }
 
-// Error handling for uncaught errors
-window.addEventListener('error', (event) => {
-    console.error('Erro global capturado:', event.error);
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-    console.error('Promise rejeitada:', event.reason);
+    const removeKeysForm = document.getElementById('remove-keys-form');
+    if (removeKeysForm) {
+        removeKeysForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const mesaId = parseInt(document.getElementById('remove-mesa-select').value);
+            const quantidade = parseInt(document.getElementById('remove-quantidade').value);
+            const motivo = document.getElementById('remove-motivo').value.trim();
+            
+            if (!mesaId || !quantidade) {
+                showNotification('Selecione mesa e quantidade', 'error');
+                return;
+            }
+            
+            const success = await removeKeysToMesa(mesaId, quantidade, motivo);
+            if (success) {
+                closeModal('remove-keys-modal');
+                removeKeysForm.reset();
+            }
+        });
+    }
+    
+    // Close modals on outside click
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal')) {
+            e.target.style.display = 'none';
+        }
+    });
+    
 });
