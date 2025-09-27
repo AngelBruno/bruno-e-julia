@@ -5,6 +5,13 @@ export default defineConfig({
   build: {
     outDir: '../dist',
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: 'public/index.html',
+        ranking: 'public/ranking.html',
+        admin: 'public/admin.html'
+      }
+    }
   },
   server: {
     port: 3000,

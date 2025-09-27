@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gravata dos Noivos</title>
+  <script type="module" crossorigin src="/assets/admin-BtUslJ4g.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/firebase-config-Cap9RXTK.js">
+  <link rel="stylesheet" crossorigin href="/assets/admin-DqOQdC2O.css">
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <h1>🎩 Administração - Gravata dos Noivos</h1>
+            <div class="header-actions">
+                <a href="ranking.html" class="btn btn-secondary">Ver Ranking Público</a>
+                <button id="logout-btn" class="btn btn-outline">Sair</button>
+            </div>
+        </header>
+
+        <div class="admin-content">
+            <!-- Painel de Estatísticas -->
+            <section class="stats-panel">
+                <h2>📊 Estatísticas Gerais</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-chaves">0</div>
+                        <div class="stat-label">Chaves Distribuídas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-mesas">0</div>
+                        <div class="stat-label">Mesas Ativas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="chaves-restantes">1000</div>
+                        <div class="stat-label">Chaves Restantes</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gerenciamento de Mesas -->
+            <section class="mesa-management">
+                <h2>🏆 Gerenciamento de Mesas</h2>
+                
+                <!-- Formulário para adicionar nova mesa -->
+                <div class="add-mesa-form">
+                    <h3>Adicionar Nova Mesa</h3>
+                    <form id="nova-mesa-form">
+                        <div class="form-group">
+                            <label for="mesa-id">ID da Mesa:</label>
+                            <input type="number" id="mesa-id" required min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="mesa-nome">Nome da Mesa:</label>
+                            <input type="text" id="mesa-nome" placeholder="Ex: MESA 01" required maxlength="20">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Criar Mesa</button>
+                    </form>
+                </div>
+
+                <!-- Lista de mesas existentes -->
+                <div class="mesas-list">
+                    <h3>Mesas Existentes</h3>
+                    <div id="mesas-container">
+                        <!-- Mesas serão carregadas dinamicamente -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Ações Rápidas -->
+            <section class="quick-actions">
+                <h2>⚡ Ações Rápidas</h2>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="openModal('add-keys-modal')">
+                        ➕ Adicionar Chaves
+                    </button>
+                    <button class="action-btn" onclick="openModal('remove-keys-modal')">
+                        ➖ Remover Chaves
+                    </button>
+                    <button class="action-btn" onclick="openModal('config-modal')">
+                        ⚙️ Configurações
+                    </button>
+                    <button class="action-btn danger" onclick="resetGame()">
+                        🔄 Reset Jogo
+                    </button>
+                </div>
+            </section>
+
+            <!-- Histórico de Ações -->
+            <section class="history-section">
+                <h2>📜 Histórico de Ações</h2>
+                <div id="history-container" class="history-list">
+                    <!-- Histórico será carregado dinamicamente -->
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Modal para Adicionar Chaves -->
+    <div id="add-keys-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('add-keys-modal')">&times;</span>
+            <h3>Adicionar Chaves</h3>
+            <form id="add-keys-form">
+                <div class="form-group">
+                    <label for="add-mesa-select">Mesa:</label>
+                    <select id="add-mesa-select" required>
+                        <option value="">Selecione uma mesa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="add-quantidade">Quantidade:</label>
+                    <input type="number" id="add-quantidade" required min="1">
+                </div>
+                <div class="form-group">
+                    <label for="add-motivo">Motivo:</label>
+                    <input type="text" id="add-motivo" placeholder="Ex: Completou desafio">
+                </div>
+                <button type="submit" class="btn btn-primary">Adicionar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('add-keys-modal')">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Remover Chaves -->
+    <div id="remove-keys-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('remove-keys-modal')">&times;</span>
+            <h3>Remover Chaves</h3>
+            <form id="remove-keys-form">
+                <div class="form-group">
+                    <label for="remove-mesa-select">Mesa:</label>
+                    <select id="remove-mesa-select" required>
+                        <option value="">Selecione uma mesa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="remove-quantidade">Quantidade:</label>
+                    <input type="number" id="remove-quantidade" required min="1">
+                </div>
+                <div class="form-group">
+                    <label for="remove-motivo">Motivo:</label>
+                    <input type="text" id="remove-motivo" placeholder="Ex: Correção de erro" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Remover</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('remove-keys-modal')">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Configurações -->
+    <div id="config-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('config-modal')">&times;</span>
+            <h3>Configurações do Jogo</h3>
+            <form id="config-form">
+                <div class="form-group">
+                    <label for="total-chaves-config">Total de Chaves:</label>
+                    <input type="number" id="total-chaves-config" required min="100">
+                </div>
+                <div class="form-group">
+                    <label for="status-jogo">Status do Jogo:</label>
+                    <select id="status-jogo" required>
+                        <option value="ativo">Ativo</option>
+                        <option value="pausado">Pausado</option>
+                        <option value="finalizado">Finalizado</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('config-modal')">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+</body>
+</html>

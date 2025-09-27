@@ -1,0 +1,87 @@
+# Queries para o sistema de ranking das mesas
+
+# Listar todas as mesas ordenadas por ranking (mais chaves primeiro)
+query ListMesasRanking @auth(level: PUBLIC, insecureReason: "Qualquer pessoa pode ver o ranking público.") {
+  mesas(orderBy: { chaves: DESC }) {
+    id
+    nome
+    chaves
+    ultimaAtualizacao
+  }
+}
+
+# Obter mesa por ID
+query GetMesaById($mesaId: Int!) @auth(level: PUBLIC, insecureReason: "Qualquer pessoa pode ver dados de uma mesa específica.") {
+  mesa(id: $mesaId) {
+    id
+    nome
+    chaves
+    ultimaAtualizacao
+  }
+}
+
+# Obter configurações do jogo
+query GetConfiguracaoJogo @auth(level: PUBLIC, insecureReason: "Configurações são públicas para exibir o total de chaves.") {
+  configuracaoJogo(id: 1) {
+    totalChaves
+    statusJogo
+    ultimaAtualizacao
+  }
+}
+
+# Obter histórico de uma mesa específica
+query GetHistoricoMesa($mesaId: Int!) @auth(level: USER) {
+  registroChaves(
+    where: { mesaId: { eq: $mesaId } }
+    orderBy: { dataHora: DESC }
+  ) {
+    id
+    quantidade
+    motivo
+    dataHora
+    mesa {
+      id
+      nome
+    }
+  }
+}
+
+# Obter estatísticas gerais do jogo
+query GetEstatisticasJogo @auth(level: PUBLIC, insecureReason: "Estatísticas são públicas.") {
+  mesas {
+    id
+    nome
+    chaves
+  }
+  configuracaoJogo(id: 1) {
+    totalChaves
+    statusJogo
+  }
+}
+
+# Obter top 3 mesas para o pódio
+query GetTop3Mesas @auth(level: PUBLIC, insecureReason: "Top 3 é informação pública.") {
+  mesas(
+    orderBy: { chaves: DESC }
+    limit: 3
+  ) {
+    id
+    nome
+    chaves
+    ultimaAtualizacao
+  }
+}
+
+# Query para administradores listarem todos os registros
+query ListTodosRegistros @auth(level: USER) {
+  registroChaves(orderBy: { dataHora: DESC }) {
+    id
+    quantidade
+    motivo
+    dataHora
+    mesa {
+      id
+      nome
+    }
+  }
+}

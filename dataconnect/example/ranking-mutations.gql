@@ -1,0 +1,95 @@
+# Mutations para o sistema de ranking das mesas
+
+# Criar uma nova mesa
+mutation CriarMesa($id: Int!, $nome: String!) 
+@auth(level: USER_EMAIL_VERIFIED, insecureReason: "Apenas usuários verificados podem criar mesas.") {
+  mesa_insert(data: { 
+    id: $id, 
+    nome: $nome, 
+    chaves: 0 
+  })
+}
+
+# Adicionar chaves a uma mesa
+mutation AdicionarChaves($mesaId: Int!, $quantidade: Int!, $motivo: String) 
+@auth(level: USER_EMAIL_VERIFIED, insecureReason: "Apenas usuários verificados podem adicionar chaves.") {
+  # Primeiro, registramos a ação
+  registroChave_insert(data: {
+    mesaId: $mesaId,
+    quantidade: $quantidade,
+    motivo: $motivo
+  })
+  
+  # Depois atualizamos o total da mesa
+  mesa_update(
+    id: $mesaId,
+    _inc: { chaves: $quantidade }
+  )
+}
+
+# Remover chaves de uma mesa
+mutation RemoverChaves($mesaId: Int!, $quantidade: Int!, $motivo: String) 
+@auth(level: USER_EMAIL_VERIFIED, insecureReason: "Apenas usuários verificados podem remover chaves.") {
+  # Registramos a ação (quantidade negativa)
+  registroChave_insert(data: {
+    mesaId: $mesaId,
+    quantidade: $quantidade,
+    motivo: $motivo
+  })
+  
+  # Atualizamos o total da mesa
+  mesa_update(
+    id: $mesaId,
+    _inc: { chaves: $quantidade }
+  )
+}
+
+# Definir número exato de chaves para uma mesa
+mutation DefinirChavesMesa($mesaId: Int!, $novoTotal: Int!, $motivo: String) 
+@auth(level: USER_EMAIL_VERIFIED, insecureReason: "Apenas usuários verificados podem definir totais.") {
+  # Atualizamos diretamente o total
+  mesa_update(
+    id: $mesaId,
+    _set: { chaves: $novoTotal }
+  )
+  
+  # Registramos a ação
+  registroChave_insert(data: {
+    mesaId: $mesaId,
+    quantidade: 0, # Indica que foi uma redefinição
+    motivo: $motivo
+  })
+}
+
+# Criar ou atualizar configuração do jogo
+mutation AtualizarConfiguracaoJogo($totalChaves: Int!, $statusJogo: String!) 
+@auth(level: USER_EMAIL_VERIFIED, insecureReason: "Apenas usuários verificados podem alterar configurações.") {
+  configuracaoJogo_upsert(data: {
+    id: 1,
+    totalChaves: $totalChaves,
+    statusJogo: $statusJogo
+  })
+}
+
+# Resetar todas as chaves (para reiniciar o jogo)
+mutation ResetarJogo($motivo: String!) 
+@auth(level: USER_EMAIL_VERIFIED, insecureReason: "Apenas usuários verificados podem resetar o jogo.") {
+  # Esta seria uma operação especial que resetaria todas as mesas
+  # Por ora, vamos apenas registrar que precisa ser implementada via batch operation
+  registroChave_insert(data: {
+    mesaId: 0, # 0 indica ação global
+    quantidade: 0,
+    motivo: $motivo
+  })
+}
+
+# Criar usuário administrador
+mutation CriarUsuarioAdmin($username: String!, $email: String!, $role: String!) 
+@auth(level: USER) {
+  adminUser_upsert(data: {
+    id_expr: "auth.uid",
+    username: $username,
+    email: $email,
+    role: $role
+  })
+}

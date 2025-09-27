@@ -1,0 +1,53 @@
+# Schema para o projeto de casamento Bruno e Julia
+# Sistema de ranking de mesas e jogo da gravata dos noivos
+
+# Mesa representa cada mesa do evento
+type Mesa @table {
+  # ID único da mesa (ex: 1, 2, 3...)
+  id: Int!
+  # Nome da mesa (ex: "MESA 01", "MESA 02"...)
+  nome: String! @col(dataType: "varchar(20)")
+  # Número de chaves coletadas pela mesa
+  chaves: Int! @default(expr: "0")
+  # Data da última atualização
+  ultimaAtualizacao: Timestamp! @default(expr: "request.time")
+}
+
+# Registro de ações de chaves para auditoria
+type RegistroChave @table {
+  # ID único do registro
+  id: UUID! @default(expr: "uuidV4()")
+  # Mesa que ganhou/perdeu chaves
+  mesa: Mesa!
+  # Quantidade de chaves (positivo = ganhou, negativo = perdeu)
+  quantidade: Int!
+  # Motivo da alteração
+  motivo: String @col(dataType: "varchar(200)")
+  # Timestamp da ação
+  dataHora: Timestamp! @default(expr: "request.time")
+}
+
+# Configurações gerais do jogo
+type ConfiguracaoJogo @table {
+  # ID único (sempre 1 para singleton)
+  id: Int! @default(expr: "1")
+  # Total de chaves disponíveis no jogo
+  totalChaves: Int! @default(expr: "1000")
+  # Status do jogo (ativo, pausado, finalizado)
+  statusJogo: String! @col(dataType: "varchar(20)") @default(expr: "'ativo'")
+  # Última atualização das configurações
+  ultimaAtualizacao: Timestamp! @default(expr: "request.time")
+}
+
+# User table para administradores do sistema
+type AdminUser @table {
+  # `@default(expr: "auth.uid")` sets it to Firebase Auth UID during insert and upsert.
+  id: String! @default(expr: "auth.uid")
+  username: String! @col(dataType: "varchar(50)")
+  # Role do usuário (admin, moderator, viewer)
+  role: String! @col(dataType: "varchar(20)") @default(expr: "'viewer'")
+  # Email do usuário
+  email: String! @col(dataType: "varchar(100)")
+  # Data de criação
+  dataCriacao: Timestamp! @default(expr: "request.time")
+}
