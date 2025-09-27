@@ -176,13 +176,12 @@ function updateMesasList() {
     
     sortedMesas.forEach((mesa, index) => {
         const position = index + 1;
-        const medal = position === 1 ? '🥇' : position === 2 ? '🥈' : position === 3 ? '🥉' : `${position}º`;
         
         const div = document.createElement('div');
         div.className = 'mesa-item';
         div.innerHTML = `
             <div class="mesa-info">
-                <div class="mesa-nome">${medal} ${mesa.nome}</div>
+                <div class="mesa-nome">${mesa.nome}</div>
                 <div class="mesa-chaves">${mesa.chaves} chaves</div>
             </div>
             <div class="mesa-actions">
