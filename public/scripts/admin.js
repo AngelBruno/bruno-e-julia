@@ -129,11 +129,16 @@ async function removeKeysToMesa(mesaId, quantidade, motivo) {
         if (!currentMesa) {
             throw new Error('Mesa não encontrada');
         }
+
+        const newQuantity = currentMesa.chaves - quantidade;
+        if (newQuantity < 0) {
+            throw new Error('Quantidade insuficiente de chaves na mesa');
+        }
         
         const mesaRefStr = mesaId > 9 ? mesaId.toString() : '0' + mesaId.toString();
         const mesaRef = doc(db, 'mesas', mesaRefStr);
         await updateDoc(mesaRef, {
-            chaves: decrement(quantidade),
+            chaves: newQuantity,
             ultimaAtualizacao: serverTimestamp()
         });
         
@@ -143,19 +148,19 @@ async function removeKeysToMesa(mesaId, quantidade, motivo) {
                 mesaId: mesaId,
                 mesaNome: currentMesa.nome || 'Unknown',
                 quantidade: quantidade,
-                motivo: motivo || 'Adição de chaves',
+                motivo: motivo || 'Remoção de chaves',
                 dataHora: serverTimestamp()
             });
         } catch (historyError) {
             console.warn('Could not add to history:', historyError.message);
         }
         
-        showNotification(`${quantidade} chaves adicionadas!`, 'success');
+        showNotification(`${quantidade} chaves removidas!`, 'success');
         return true;
         
     } catch (error) {
-        console.error('Error adding keys:', error);
-        showNotification('Erro ao adicionar chaves: ' + error.message, 'error');
+        console.error('Error removing keys:', error);
+        showNotification('Erro ao remover chaves: ' + error.message, 'error');
         return false;
     }
 }
@@ -242,6 +247,13 @@ function showNotification(message, type = 'info') {
         }
     }, type === 'error' ? 5000 : 3000);
 }
+
+// Função para sortear número 
+window.sortearNumero = () => {
+    const max = document.getElementById('sort-max').value
+    const numero = Math.floor(Math.random() * max) + 1;
+    document.getElementById('resultado-sorteio').textContent = numero;
+};
 
 // Global functions for buttons
 window.quickAddKeys = (mesaId) => {
@@ -363,5 +375,4 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.target.style.display = 'none';
         }
     });
-    
 });

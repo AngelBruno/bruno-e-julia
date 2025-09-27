@@ -21,12 +21,17 @@
     "start": "npm run serve"
   },
   "dependencies": {
-    "firebase": "^10.13.0"
+    "firebase": "^10.13.0",
+    "firebase-tools": "^14.17.0"
   },
   "devDependencies": {
     "vite": "^5.0.0"
   },
-  "keywords": ["firebase", "dataconnect", "hosting"],
+  "keywords": [
+    "firebase",
+    "dataconnect",
+    "hosting"
+  ],
   "author": "Bruno e Julia",
   "license": "ISC"
 }

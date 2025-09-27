@@ -82,6 +82,10 @@
                     <button class="action-btn danger" onclick="resetGame()">
                         🔄 Reset Jogo
                     </button>
+                    <button class="action-btn" onclick="openModal('sorteio-modal')">
+                        🎁 Sorteio
+                    </button>
+                    
                 </div>
             </section>
 
@@ -168,6 +172,27 @@
                 <button type="submit" class="btn btn-primary">Salvar</button>
                 <button type="button" class="btn btn-secondary" onclick="closeModal('config-modal')">Cancelar</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal para Sorteio de Número -->
+    <div id="sorteio-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('sorteio-modal')">&times;</span>
+            <h3>Sorteio de Número</h3>
+            <div class="form-group">
+                <label for="sort-max">Número Máx:</label>
+                <input type="number" id="sort-max" required min="1">
+            </div>
+            <div class="form-group" style="text-align:center;">
+                <button type="button" class="btn btn-primary" onclick="sortearNumero()">Sortear Número</button>
+            </div>
+            <div class="form-group" style="text-align:center; margin-top:20px;">
+                <span id="resultado-sorteio" style="font-size:2em;"></span>
+            </div>
+            <div class="form-group" style="text-align:center; margin-top:20px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('sorteio-modal')">Fechar</button>
+            </div>
         </div>
     </div>
 
