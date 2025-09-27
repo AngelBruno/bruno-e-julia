@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/AngelBruno/bruno-e-julia/issues"
   },
-  "homepage": "https://github.com/AngelBruno/bruno-e-julia#readme"
+  "homepage": "https://github.com/AngelBruno/bruno-e-julia#readme",
+  "dependencies": {
+    "firebase": "^12.3.0"
+  }
 }
