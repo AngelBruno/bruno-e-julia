@@ -172,7 +172,7 @@ function updateMesasList() {
     
     container.innerHTML = '';
     
-    const sortedMesas = [...mesas].sort((a, b) => b.chaves - a.chaves).sort((a, b) => a.id - b.id);
+    const sortedMesas = [...mesas].sort((a, b) => a.id - b.id).sort((a, b) => b.chaves - a.chaves);
     
     sortedMesas.forEach((mesa, index) => {
         const position = index + 1;
