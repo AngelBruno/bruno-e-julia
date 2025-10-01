@@ -85,7 +85,7 @@ async function createMesa(id, nome) {
 }
 
 // Add keys to mesa
-async function addKeysToMesa(mesaId, quantidade, motivo) {
+async function addKeysToMesa(mesaId, quantidade) {
     try {
         const currentMesa = mesas.find(m => m.id === mesaId);
         if (!currentMesa) {
@@ -105,7 +105,7 @@ async function addKeysToMesa(mesaId, quantidade, motivo) {
                 mesaId: mesaRefStr,
                 mesaNome: currentMesa.nome,
                 quantidade: quantidade,
-                motivo: motivo || 'Adição de chaves',
+                motivo: 'Adição de chaves',
                 dataHora: serverTimestamp()
             });
         } catch (historyError) {
@@ -185,10 +185,10 @@ function updateMesasList() {
                 <div class="mesa-chaves">${mesa.chaves} chaves</div>
             </div>
             <div class="mesa-actions">
-                <button class="btn btn-sm btn-primary" onclick="quickAddKeys(${mesa.id})">
+                <button class="btn btn-sm btn-success" onclick="quickAddKeys(${mesa.id})">
                     ➕ Chaves
                 </button>
-                <button class="btn btn-sm btn-primary" onclick="quickRemoveKeys(${mesa.id})">
+                <button class="btn btn-sm btn-danger" onclick="quickRemoveKeys(${mesa.id})">
                     ➖ Chaves
                 </button>
             </div>
@@ -338,20 +338,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         addKeysForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const mesaId = parseInt(document.getElementById('add-mesa-select').value);
             const quantidade = parseInt(document.getElementById('add-quantidade').value);
-            const motivo = document.getElementById('add-motivo').value.trim();
             
             if (!mesaId || !quantidade) {
                 showNotification('Selecione mesa e quantidade', 'error');
                 return;
             }
             
-            const success = await addKeysToMesa(mesaId, quantidade, motivo);
-            if (success) {
-                closeModal('add-keys-modal');
-                addKeysForm.reset();
-            }
+            const success = await addKeysToMesa(mesaId, quantidade);
         });
     }
 

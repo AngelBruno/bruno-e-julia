@@ -87,6 +87,24 @@ body {
     color: white;
 }
 
+.btn-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
 /* Admin Content */
 .admin-content {
     display: flex;
@@ -216,9 +234,12 @@ section h2 {
     font-size: 14px;
 }
 
-.mesa-actions {
-    display: flex;
-    gap: 10px;
+.mesa-actions .btn-success {
+    background-color: #28a745;
+}
+
+.mesa-actions .btn-danger {
+    background-color: #dc3545;
 }
 
 .btn-sm {
