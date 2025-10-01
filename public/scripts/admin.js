@@ -338,6 +338,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         addKeysForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const mesaId = parseInt(document.getElementById('add-mesa-select').value);
             const quantidade = parseInt(document.getElementById('add-quantidade').value);
             
             if (!mesaId || !quantidade) {
