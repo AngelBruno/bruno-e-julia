@@ -1,11 +1,19 @@
-// Firestore Security Rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read/write access to all documents for testing
-    // In production, you should make these rules more restrictive
-    match /{document=**} {
-      allow read, write: if true;
+
+    match /mesas/{mesaId} {
+      allow read: if true;
+      allow write: if true;
     }
+
+    match /historico/{historicoId} {
+      allow read, write: if true;
+
+      match /registros/{registroId} {
+        allow read, write: if true;
+      }
+    }
+
   }
 }

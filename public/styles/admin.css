@@ -424,3 +424,42 @@ section h2 {
 .history-item {
     animation: slideIn 0.3s ease-out;
 }
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+thead {
+    background-color: #f8f9fa;
+}
+
+th {
+    font-weight: 600;
+    color: #333;
+}
+
+tbody tr:hover {
+    background-color: #f1f3f4;
+}
+
+#historico-tbody td.positivo {
+    color: #28a745;
+    font-weight: bold;
+}
+
+#historico-tbody td.negativo {
+    color: #dc3545;
+    font-weight: bold;
+}

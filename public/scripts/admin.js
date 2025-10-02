@@ -6,6 +6,7 @@ import {
     updateDoc, 
     doc, 
     getDocs, 
+    getDoc,
     setDoc,
     increment,
     serverTimestamp,
@@ -64,6 +65,23 @@ async function setupMesasListener() {
     }
 }
 
+async function setupHistoricoListener() {
+    try {
+        const historicoRef = collection(db, 'historico', 'bV3oggvLWnbtvuxWtwws', 'registros');
+        const q = query(historicoRef, orderBy('dataHora', 'desc'));
+
+        onSnapshot(q, (snapshot) => {
+            const historico = [];
+            snapshot.forEach((doc) => {
+                historico.push(doc.data());
+            });
+            updateHistoricoList(historico); // Chama a função para atualizar a interface
+        });
+    } catch (error) {
+        console.error('❌ Error setting up historico listener:', error);
+    }
+}
+
 // Create new mesa
 async function createMesa(id, nome) {
     try {
@@ -100,19 +118,16 @@ async function addKeysToMesa(mesaId, quantidade) {
         });
         
         // Add to history
-        try {
-            await addDoc(collection(db, 'historico'), {
-                mesaId: mesaRefStr,
-                mesaNome: currentMesa.nome,
-                quantidade: quantidade,
-                motivo: 'Adição de chaves',
-                dataHora: serverTimestamp()
-            });
-        } catch (historyError) {
-            console.warn('Could not add to history:', historyError.message);
-        }
+        await addHistory({
+            mesaId: mesaRefStr,
+            mesaNome: currentMesa.nome,
+            quantidade: quantidade,
+            motivo: 'Adição de chaves',
+            dataHora: serverTimestamp()
+        });
         
         showNotification(`${quantidade} chaves adicionadas!`, 'success');
+        closeModal('add-keys-modal');
         return true;
         
     } catch (error) {
@@ -143,25 +158,39 @@ async function removeKeysToMesa(mesaId, quantidade, motivo) {
         });
         
         // Add to history
-        try {
-            await addDoc(collection(db, 'historico'), {
-                mesaId: mesaId,
-                mesaNome: currentMesa.nome || 'Unknown',
-                quantidade: quantidade,
-                motivo: motivo || 'Remoção de chaves',
-                dataHora: serverTimestamp()
-            });
-        } catch (historyError) {
-            console.warn('Could not add to history:', historyError.message);
-        }
+        await addHistory({
+            mesaId: mesaRefStr,
+            mesaNome: currentMesa.nome || 'Unknown',
+            quantidade: -quantidade, // Salva como negativo para remoção
+            motivo: motivo || 'Remoção de chaves',
+            dataHora: serverTimestamp()
+        });
         
         showNotification(`${quantidade} chaves removidas!`, 'success');
+        closeModal('remove-keys-modal');
         return true;
         
     } catch (error) {
         console.error('Error removing keys:', error);
         showNotification('Erro ao remover chaves: ' + error.message, 'error');
         return false;
+    }
+}
+
+async function addHistory(data) {
+    try {
+        const historicoDocRef = doc(db, 'historico', 'bV3oggvLWnbtvuxWtwws');
+        const historicoDoc = await getDoc(historicoDocRef);
+
+        if (!historicoDoc.exists()) {
+            await setDoc(historicoDocRef, {});
+        }
+
+        console.log('Adding to history:', data);
+        await addDoc(collection(historicoDocRef, 'registros'), data);
+        console.log('Successfully added to history.');
+    } catch (historyError) {
+        console.warn('Could not add to history:', historyError.message);
     }
 }
 
@@ -195,9 +224,31 @@ function updateMesasList() {
         `;
         container.appendChild(div);
     });
-    
-
 }
+
+function updateHistoricoList(historico) {
+    const tbody = document.getElementById('historico-tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = ''; // Limpa a tabela antes de recarregar
+
+    historico.forEach(item => {
+        const dataHora = item.dataHora?.toDate ? item.dataHora.toDate().toLocaleString('pt-BR') : 'Carregando...';
+        const quantidadeClass = item.quantidade > 0 ? 'positivo' : 'negativo';
+        const quantidadeTexto = item.quantidade > 0 ? `+${item.quantidade}` : item.quantidade;
+
+        const row = `
+            <tr>
+                <td>${item.mesaNome} (ID: ${item.mesaId})</td>
+                <td class="${quantidadeClass}">${quantidadeTexto}</td>
+                <td>${item.motivo}</td>
+                <td>${dataHora}</td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+
 
 function updateSelectOptions() {
     const selects = ['add-mesa-select', 'remove-mesa-select'];
@@ -293,6 +344,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (connected) {
         // Set up real-time listeners
         await setupMesasListener();
+        await setupHistoricoListener(); // ADIÇÃO: Chama a função para carregar o histórico
     } else {
         showNotification('Firebase não configurado. Configure o Firestore para usar o sistema.', 'error');
     }
@@ -346,7 +398,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             
-            const success = await addKeysToMesa(mesaId, quantidade);
+            // Passa o motivo para a função
+            const success = await addKeysToMesa(mesaId, quantidade); 
+            if (success) {
+                addKeysForm.reset();
+            }
         });
     }
 
@@ -366,7 +422,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const success = await removeKeysToMesa(mesaId, quantidade, motivo);
             if (success) {
-                closeModal('remove-keys-modal');
                 removeKeysForm.reset();
             }
         });

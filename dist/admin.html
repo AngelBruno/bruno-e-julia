@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Gravata do    <script type="module" src="/scripts/admin-simple.js"></script>
-</body>Noivos</title>
-  <script type="module" crossorigin src="/assets/admin-Bz-eMaHo.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/firebase-config-CfDjXtCw.js">
-  <link rel="stylesheet" crossorigin href="/assets/admin-DqOQdC2O.css">
+    <title>Admin - Gravata do    <script type="module" src="/scripts/admin.js"></script>
+</body>Noivos</title>
+  <script type="module" crossorigin src="/assets/admin-BuOkqpWq.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/firebase-config-CYVDa9ry.js">
+  <link rel="stylesheet" crossorigin href="/assets/admin-Bb3BNnoa.css">
 </head>
 <body>
     <div class="admin-container">
@@ -78,20 +78,35 @@
                     <button class="action-btn" onclick="openModal('remove-keys-modal')">
                         ➖ Remover Chaves
                     </button>
-                    <button class="action-btn" onclick="openModal('config-modal')">
+                    <!-- <button class="action-btn" onclick="openModal('config-modal')">
                         ⚙️ Configurações
                     </button>
                     <button class="action-btn danger" onclick="resetGame()">
                         🔄 Reset Jogo
+                    </button> -->
+                    <button class="action-btn" onclick="openModal('sorteio-modal')">
+                        🎁 Sorteio
                     </button>
+                    
                 </div>
             </section>
 
             <!-- Histórico de Ações -->
-            <section class="history-section">
+            <section class="history-log">
                 <h2>📜 Histórico de Ações</h2>
-                <div id="history-container" class="history-list">
-                    <!-- Histórico será carregado dinamicamente -->
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mesa</th>
+                                <th>Quantidade</th>
+                                <th>Motivo</th>
+                                <th>Data e Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historico-tbody">
+                            </tbody>
+                    </table>
                 </div>
             </section>
         </div>
@@ -101,7 +116,7 @@
     <div id="add-keys-modal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('add-keys-modal')">&times;</span>
-            <h3>Adicionar Chaves</h3>
+            <h3>✅ Adicionar Chaves</h3>
             <form id="add-keys-form">
                 <div class="form-group">
                     <label for="add-mesa-select">Mesa:</label>
@@ -113,11 +128,7 @@
                     <label for="add-quantidade">Quantidade:</label>
                     <input type="number" id="add-quantidade" required min="1">
                 </div>
-                <div class="form-group">
-                    <label for="add-motivo">Motivo:</label>
-                    <input type="text" id="add-motivo" placeholder="Ex: Completou desafio">
-                </div>
-                <button type="submit" class="btn btn-primary">Adicionar</button>
+                <button type="submit" class="btn btn-success">Adicionar</button>
                 <button type="button" class="btn btn-secondary" onclick="closeModal('add-keys-modal')">Cancelar</button>
             </form>
         </div>
@@ -127,7 +138,7 @@
     <div id="remove-keys-modal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('remove-keys-modal')">&times;</span>
-            <h3>Remover Chaves</h3>
+            <h3>❌ Remover Chaves</h3>
             <form id="remove-keys-form">
                 <div class="form-group">
                     <label for="remove-mesa-select">Mesa:</label>
@@ -141,9 +152,9 @@
                 </div>
                 <div class="form-group">
                     <label for="remove-motivo">Motivo:</label>
-                    <input type="text" id="remove-motivo" placeholder="Ex: Correção de erro" required>
+                    <input type="text" id="remove-motivo" placeholder="Ex: Correção de erro">
                 </div>
-                <button type="submit" class="btn btn-primary">Remover</button>
+                <button type="submit" class="btn btn-danger">Remover</button>
                 <button type="button" class="btn btn-secondary" onclick="closeModal('remove-keys-modal')">Cancelar</button>
             </form>
         </div>
@@ -173,6 +184,23 @@
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Modal para Sorteio de Número -->
+    <div id="sorteio-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('sorteio-modal')">&times;</span>
+            <h3>Sorteio de Número</h3>
+            <div class="form-group" style="text-align:center;">
+                <button type="button" class="btn btn-primary" onclick="sortearNumero()">Sortear Número</button>
+            </div>
+            <div class="form-group" style="text-align:center; margin-top:20px;">
+                <span id="resultado-sorteio" style="font-size:2em;"></span>
+            </div>
+            <div class="form-group" style="text-align:center; margin-top:20px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('sorteio-modal')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
 </body>
 </html>
