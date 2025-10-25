@@ -15,5 +15,9 @@ service cloud.firestore {
       }
     }
 
+    match /sorteio/{document} {
+      allow read, write: if true;
+    }
+
   }
 }

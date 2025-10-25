@@ -12,7 +12,8 @@ import {
     serverTimestamp,
     onSnapshot,
     query,
-    orderBy
+    orderBy,
+    deleteDoc
 } from 'firebase/firestore';
 
 // Admin system for Bruno e Julia wedding
@@ -191,6 +192,19 @@ async function addHistory(data) {
         console.log('Successfully added to history.');
     } catch (historyError) {
         console.warn('Could not add to history:', historyError.message);
+    }
+}
+
+// Salvar número sorteado manualmente
+async function salvarNumeroSorteado(numero) {
+    try {
+        const sorteioRef = doc(db, 'sorteio', 'resultado');
+        await setDoc(sorteioRef, { numero: numero, timestamp: serverTimestamp() });
+        showNotification(`Número ${numero} salvo com sucesso!`, 'success');
+        closeModal('manual-sorteio-modal');
+    } catch (error) {
+        console.error('Erro ao salvar número sorteado:', error);
+        showNotification('Erro ao salvar número: ' + error.message, 'error');
     }
 }
 
@@ -426,6 +440,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
+
+    const manualSorteioForm = document.getElementById('manual-sorteio-form');
+    if (manualSorteioForm) {
+        manualSorteioForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const numero = parseInt(document.getElementById('numero-sorteado').value);
+            if (!numero) {
+                showNotification('Digite um número válido', 'error');
+                return;
+            }
+            await salvarNumeroSorteado(numero);
+        });
+    }
     
     // Close modals on outside click
     window.addEventListener('click', (e) => {
@@ -433,4 +460,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.target.style.display = 'none';
         }
     });
+
+    const deleteBtn = document.getElementById('delete-sorteio-btn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async () => {
+            if (confirm('Tem certeza que deseja apagar o número sorteado?')) {
+                await deleteSorteio();
+            }
+        });
+    }
 });
+
+async function deleteSorteio() {
+    try {
+        const sorteioRef = doc(db, 'sorteio', 'resultado');
+        await deleteDoc(sorteioRef);
+        showNotification('Número sorteado apagado com sucesso!', 'success');
+    } catch (error) {
+        console.error('Erro ao apagar número sorteado:', error);
+        showNotification('Erro ao apagar número sorteado: ' + error.message, 'error');
+    }
+}

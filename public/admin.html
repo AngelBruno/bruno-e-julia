@@ -85,6 +85,12 @@
                     <button class="action-btn" onclick="openModal('sorteio-modal')">
                         🎁 Sorteio
                     </button>
+                    <button class="action-btn" onclick="openModal('manual-sorteio-modal')">
+                        🔢 Sorteio Manual
+                    </button>
+                    <button id="delete-sorteio-btn" class="action-btn danger">
+                        🗑️ Apagar Número Sorteado
+                    </button>
                     
                 </div>
             </section>
@@ -191,11 +197,29 @@
                 <button type="button" class="btn btn-primary" onclick="sortearNumero()">Sortear Número</button>
             </div>
             <div class="form-group" style="text-align:center; margin-top:20px;">
-                <span id="resultado-sorteio" style="font-size:2em;"></span>
+                <div class="resultado-box">
+                    <span id="resultado-sorteio"></span>
+                </div>
             </div>
             <div class="form-group" style="text-align:center; margin-top:20px;">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('sorteio-modal')">Fechar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal para Sorteio Manual -->
+    <div id="manual-sorteio-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('manual-sorteio-modal')">&times;</span>
+            <h3>Sorteio Manual</h3>
+            <form id="manual-sorteio-form">
+                <div class="form-group">
+                    <label for="numero-sorteado">Número Sorteado:</label>
+                    <input type="number" id="numero-sorteado" required min="1">
+                </div>
+                <button type="submit" class="btn btn-primary">Salvar Número</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('manual-sorteio-modal')">Cancelar</button>
+            </form>
         </div>
     </div>
 

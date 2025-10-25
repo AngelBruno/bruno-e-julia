@@ -463,3 +463,17 @@ tbody tr:hover {
     color: #dc3545;
     font-weight: bold;
 }
+
+.resultado-box {
+    border: 2px solid #000;
+    padding: 20px;
+    margin: 20px auto;
+    width: fit-content;
+    background-color: #f8f9fa;
+}
+
+#resultado-sorteio {
+    font-size: 2.5em;
+    color: #000;
+    font-weight: bold;
+}

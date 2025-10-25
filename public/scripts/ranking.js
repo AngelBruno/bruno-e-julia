@@ -1,6 +1,6 @@
 // Simple and working ranking system
 import { app, db } from '../firebase-config.js';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc } from 'firebase/firestore';
 
 // Ranking system for Bruno e Julia wedding
 
@@ -53,6 +53,25 @@ function setupMesasListener() {
         
     } catch (error) {
         console.error('❌ Error setting up mesas listener:', error);
+    }
+}
+
+// Listener para o número sorteado
+function setupSorteioListener() {
+    try {
+        const sorteioRef = doc(db, 'sorteio', 'resultado');
+        onSnapshot(sorteioRef, (doc) => {
+            if (doc.exists()) {
+                const data = doc.data();
+                const numero = data.numero;
+                document.getElementById('numero-sorteado-display').textContent = numero;
+                document.getElementById('sorteio-info').style.display = 'block';
+            } else {
+                document.getElementById('sorteio-info').style.display = 'none';
+            }
+        });
+    } catch (error) {
+        console.error('❌ Error setting up sorteio listener:', error);
     }
 }
 
@@ -142,6 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (connected) {
         setupMesasListener();
+        setupSorteioListener();
     } else {
         showError();
     }
