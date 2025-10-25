@@ -88,21 +88,21 @@ function renderMesasList() {
     }
 
     const totalKeys = 1500; // Default total keys
-    
-    const sortedMesas = [...mesas].sort((a, b) => a.id - b.id).sort((a, b) => b.chaves - a.chaves).slice(0, 5);
 
-    sortedMesas.forEach((mesa) => {
+    const topMesas = mesas.slice(0, 5);
+
+    topMesas.forEach((mesa) => {
         const percentage = totalKeys > 0 ? (mesa.chaves / totalKeys) * 100 : 0;
-        
+
         const mesaRow = document.createElement('div');
         mesaRow.className = 'mesa-row';
-        
+
         mesaRow.innerHTML = `
             <div class="progress-fill" style="width: ${percentage}%"></div>
             <div class="mesa-content">
                 <span>${mesa.nome}</span>
                 <div class="keys">
-                    <img src="https://i.imgur.com/UlRQH5U.png" alt="Ícone Chave" class="key-image-icon" onerror="this.style.display='none';" />
+                    <img src="[https://i.imgur.com/UlRQH5U.png](https://i.imgur.com/UlRQH5U.png)" alt="Ícone Chave" class="key-image-icon" onerror="this.style.display='none';" />
                     <svg class="key-icon fallback-icon" viewBox="0 0 100 100">
                         <circle cx="30" cy="30" r="20" fill="none" stroke="#FFC107" stroke-width="6"/>
                         <rect x="45" y="25" width="40" height="10" fill="#FFC107"/>
@@ -113,11 +113,9 @@ function renderMesasList() {
                 </div>
             </div>
         `;
-        
+
         rankingList.appendChild(mesaRow);
     });
-
-
 }
 
 // Helper functions
