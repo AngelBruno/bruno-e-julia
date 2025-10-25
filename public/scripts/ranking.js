@@ -87,7 +87,7 @@ function renderMesasList() {
         return;
     }
 
-    const totalKeys = 1000; // Default total keys
+    const totalKeys = 1500; // Default total keys
     
     const sortedMesas = [...mesas].sort((a, b) => a.id - b.id).sort((a, b) => b.chaves - a.chaves).slice(0, 5);
 

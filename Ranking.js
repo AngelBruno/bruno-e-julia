@@ -6,7 +6,7 @@ import { ReactComponent as KeyholeIcon } from '../assets/keyhole-icon.svg';
 
 const Ranking = () => {
     const [mesas, setMesas] = useState([]);
-    const totalKeys = 1000;
+    const totalKeys = 1500;
 
     useEffect(() => {
         const mockData = [

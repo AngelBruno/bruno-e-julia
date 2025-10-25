@@ -271,7 +271,7 @@ function updateSelectOptions() {
 function updateStats() {
     const totalChaves = mesas.reduce((sum, mesa) => sum + mesa.chaves, 0);
     const totalMesas = mesas.length;
-    const chavesRestantes = Math.max(0, 1000 - totalChaves);
+    const chavesRestantes = Math.max(0, 1500 - totalChaves);
     
     const totalChavesEl = document.getElementById('total-chaves');
     const totalMesasEl = document.getElementById('total-mesas');
